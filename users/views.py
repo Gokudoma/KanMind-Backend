@@ -8,13 +8,9 @@ from .serializers import UserRegistrationSerializer
 from .models import CustomUser
 
 # -------------------------------------------------------------------
-# 1. REGISTRIERUNG (Bereits vorhanden und korrekt)
+# 1. REGISTRIERUNG
 # -------------------------------------------------------------------
 class UserRegistrationView(APIView):
-    """
-    API-Endpunkt für die Benutzerregistrierung.
-    Erlaubt POST-Anfragen ohne Authentifizierung.
-    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -30,15 +26,13 @@ class UserRegistrationView(APIView):
                 'email': user.email,
                 'fullname': user.fullname
             }
-            # Gemäß Checkliste: 201 CREATED
             return Response(response_data, status=status.HTTP_201_CREATED)
         
-        # Gemäß Checkliste: 400 BAD REQUEST
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # -------------------------------------------------------------------
-# 2. LOGIN (NEU HINZUGEFÜGT)
+# 2. LOGIN
 # -------------------------------------------------------------------
 class CustomAuthToken(ObtainAuthToken):
     """
@@ -49,11 +43,17 @@ class CustomAuthToken(ObtainAuthToken):
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        # Wir müssen 'email' an 'username' übergeben, da unser CustomUser
-        # USERNAME_FIELD = 'email' verwendet.
-        request.data['username'] = request.data.get('email')
         
-        serializer = self.serializer_class(data=request.data,
+        # --- KORREKTUR START ---
+        # 1. Daten kopieren, um sie veränderbar zu machen
+        data = request.data.copy()
+        
+        # 2. 'email' (vom Frontend) dem 'username'-Feld zuweisen,
+        #    das der Standard-Serializer erwartet.
+        data['username'] = data.get('email') 
+        
+        # 3. Den Serializer mit den modifizierten Daten aufrufen
+        serializer = self.serializer_class(data=data,
                                            context={'request': request})
         
         # Löst bei Fehler automatisch 400 BAD REQUEST aus
@@ -74,7 +74,7 @@ class CustomAuthToken(ObtainAuthToken):
 
 
 # -------------------------------------------------------------------
-# 3. EMAIL-CHECK (NEU HINZUGEFÜGT)
+# 3. EMAIL-CHECK
 # -------------------------------------------------------------------
 class EmailCheckView(APIView):
     """
