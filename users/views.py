@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
-from rest_framework.authtoken.views import ObtainAuthToken  # Import für Login
+from rest_framework.authtoken.views import ObtainAuthToken
 from .serializers import UserRegistrationSerializer
 from .models import CustomUser
 
@@ -44,7 +44,6 @@ class CustomAuthToken(ObtainAuthToken):
 
     def post(self, request, *args, **kwargs):
         
-        # --- KORREKTUR START ---
         # 1. Daten kopieren, um sie veränderbar zu machen
         data = request.data.copy()
         
@@ -55,13 +54,11 @@ class CustomAuthToken(ObtainAuthToken):
         # 3. Den Serializer mit den modifizierten Daten aufrufen
         serializer = self.serializer_class(data=data,
                                            context={'request': request})
-        
-        # Löst bei Fehler automatisch 400 BAD REQUEST aus
+
         serializer.is_valid(raise_exception=True) 
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
         
-        # Antwort gemäß API-Doku
         response_data = {
             'token': token.key,
             'user_id': user.pk,
@@ -69,7 +66,6 @@ class CustomAuthToken(ObtainAuthToken):
             'fullname': user.fullname
         }
         
-        # 200 OK bei Erfolg
         return Response(response_data, status=status.HTTP_200_OK)
 
 
@@ -77,27 +73,19 @@ class CustomAuthToken(ObtainAuthToken):
 # 3. EMAIL-CHECK
 # -------------------------------------------------------------------
 class EmailCheckView(APIView):
-    """
-    API-Endpunkt zur Überprüfung, ob eine E-Mail bereits registriert ist.
-    """
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # E-Mail aus den Query-Parametern holen (z.B. /api/email-check/?email=...)
         email = request.query_params.get('email')
         
         if not email:
-            # 400, wenn der 'email'-Parameter fehlt
             return Response(
                 {"error": "Email parameter is required."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
 
         try:
-            # Versuchen, den Benutzer zu finden
             user = CustomUser.objects.get(email=email)
-            
-            # Antwort gemäß API-Doku, wenn E-Mail existiert
             response_data = {
                 "id": user.id,
                 "email": user.email,
@@ -106,7 +94,6 @@ class EmailCheckView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
             
         except CustomUser.DoesNotExist:
-            # Gemäß API-Doku: 404, wenn E-Mail nicht existiert
             return Response(
                 {"error": "Email does not exist."}, 
                 status=status.HTTP_404_NOT_FOUND

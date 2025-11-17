@@ -1,5 +1,7 @@
-from rest_framework import serializers
+from rest_framework import serializers, exceptions
+from django.contrib.auth import authenticate 
 from .models import CustomUser
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
 
@@ -10,24 +12,45 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('fullname', 'email', 'password', 'repeated_password')
 
-    def validate(self, attrs):
-        if attrs['password'] != attrs['repeated_password']:
-            raise serializers.ValidationError({"password": "Passwords do not match."})
-        return attrs
-
     def create(self, validated_data):
-        validated_data.pop('repeated_password')
-        
-        # 1. Benutzer mit Standardfeldern über den .objects-Manager erstellen
+
         user = CustomUser.objects.create_user(
             username=validated_data['email'],
             email=validated_data['email'],
             password=validated_data['password']
         )
-        
-        # 2. Das zusätzliche Feld 'fullname' setzen
         user.fullname = validated_data['fullname']
-        
-        # 3. Die Änderung am Benutzerobjekt speichern
         user.save()
         return user
+
+# -------------------------------------------------------------------
+# Eigener LoginSerializer
+# -------------------------------------------------------------------
+class LoginSerializer(serializers.Serializer):
+    """
+    Dieser Serializer validiert 'email' und 'password' (anstelle von 'username').
+    """
+    email = serializers.EmailField()
+    password = serializers.CharField(style={'input_type': 'password'})
+
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
+
+        if email and password:
+            # Wir rufen authenticate() auf. Da wir USERNAME_FIELD = 'email'
+            # in models.py gesetzt haben, weiß Django, dass es 
+            # das 'email'-Feld für die Authentifizierung verwenden soll.
+            user = authenticate(request=self.context.get('request'),
+                                username=email, password=password)
+
+            if not user:
+                # Wenn authenticate fehlschlägt, geben wir den Fehler aus
+                msg = 'Unable to log in with provided credentials.'
+                raise exceptions.ValidationError(msg, code='authorization')
+        else:
+            msg = 'Must include "email" and "password".'
+            raise exceptions.ValidationError(msg, code='authorization')
+
+        data['user'] = user
+        return data
