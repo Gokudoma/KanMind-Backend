@@ -1,5 +1,5 @@
 from django.db import models
-from django.conf import settings # Importiert die settings, um das CustomUser-Modell zu nutzen
+from django.conf import settings
 
 # -------------------------------------------------------------------
 # 1. Board Modell
