@@ -8,15 +8,9 @@ from .serializers import (
     BoardSerializer, BoardCreateUpdateSerializer, 
     TaskSerializer, CommentSerializer
 )
-# Wir importieren die Permissions, die wir brauchen
-try:
-    from .permissions import (
-        IsBoardOwner, IsBoardMember, IsCommentAuthor, IsTaskAuthorOrBoardOwner
-    )
-except ImportError:
-    # Falls die permissions.py noch nicht erstellt wurde, fangen wir das ab
-    # In einer echten Umgebung würden wir hier einen strikteren Fehler werfen
-    pass 
+from .permissions import (
+    IsBoardOwner, IsBoardMember, IsCommentAuthor, IsTaskAuthorOrBoardOwner
+)
 
 # -------------------------------------------------------------------
 # 1. Board ViewSet (/api/boards/ & /api/boards/<id>/)

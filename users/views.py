@@ -4,13 +4,17 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
 from rest_framework.authtoken.models import Token
 from rest_framework.authtoken.views import ObtainAuthToken
-from .serializers import UserRegistrationSerializer
+from .serializers import UserRegistrationSerializer, LoginSerializer
 from .models import CustomUser
 
 # -------------------------------------------------------------------
 # 1. REGISTRIERUNG
 # -------------------------------------------------------------------
 class UserRegistrationView(APIView):
+    """
+    API-Endpunkt für die Benutzerregistrierung.
+    Erlaubt POST-Anfragen ohne Authentifizierung.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -37,24 +41,15 @@ class UserRegistrationView(APIView):
 class CustomAuthToken(ObtainAuthToken):
     """
     Custom Login View.
-    Erwartet 'email' (als username) und 'password'.
-    Gibt Token, user_id, email und fullname zurück, gemäß API-Doku.
+    Nutzt den LoginSerializer für eine saubere Validierung von Email und Passwort.
     """
     permission_classes = [AllowAny]
+    serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
-        
-        # 1. Daten kopieren, um sie veränderbar zu machen
-        data = request.data.copy()
-        
-        # 2. 'email' (vom Frontend) dem 'username'-Feld zuweisen,
-        #    das der Standard-Serializer erwartet.
-        data['username'] = data.get('email') 
-        
-        # 3. Den Serializer mit den modifizierten Daten aufrufen
-        serializer = self.serializer_class(data=data,
+        serializer = self.serializer_class(data=request.data,
                                            context={'request': request})
-
+        
         serializer.is_valid(raise_exception=True) 
         user = serializer.validated_data['user']
         token, created = Token.objects.get_or_create(user=user)
@@ -73,6 +68,9 @@ class CustomAuthToken(ObtainAuthToken):
 # 3. EMAIL-CHECK
 # -------------------------------------------------------------------
 class EmailCheckView(APIView):
+    """
+    API-Endpunkt zur Überprüfung, ob eine E-Mail bereits registriert ist.
+    """
     permission_classes = [AllowAny]
 
     def get(self, request):
