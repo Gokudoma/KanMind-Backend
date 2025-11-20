@@ -7,10 +7,11 @@ from user_auth_app.models import CustomUser
 class UserNestedSerializer(serializers.ModelSerializer):
     """
     Serializer for nested user representation (read-only).
+    Matches exact field order from documentation: id -> email -> fullname.
     """
     class Meta:
         model = CustomUser
-        fields = ['id', 'fullname', 'email']
+        fields = ['id', 'email', 'fullname']
         read_only_fields = fields
 
 
@@ -29,7 +30,8 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class TaskSerializer(serializers.ModelSerializer):
     """
-    Serializer for tasks including nested user details.
+    Serializer for full task details (GET /api/tasks/ and POST).
+    Includes board reference and counts.
     """
     assignee = UserNestedSerializer(read_only=True)
     reviewer = UserNestedSerializer(read_only=True)
@@ -58,7 +60,51 @@ class TaskSerializer(serializers.ModelSerializer):
             'due_date', 'assignee', 'reviewer', 'assignee_id', 'reviewer_id',
             'comments_count'
         ]
-        extra_kwargs = {'board': {'write_only': True}}
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
+
+
+class TaskPatchResponseSerializer(serializers.ModelSerializer):
+    """
+    Specific serializer for PATCH responses of Tasks.
+    Excludes 'board' and 'comments_count' as per documentation.
+    """
+    assignee = UserNestedSerializer(read_only=True)
+    reviewer = UserNestedSerializer(read_only=True)
+
+    class Meta:
+        model = Task
+        fields = [
+            'id', 'title', 'description', 'status', 'priority',
+            'assignee', 'reviewer', 'due_date'
+        ]
+
+
+class TaskUpdateSerializer(TaskSerializer):
+    """
+    Serializer specifically for updating tasks.
+    Inherits validation logic from TaskSerializer but uses
+    TaskPatchResponseSerializer for the response format.
+    """
+    def to_representation(self, instance):
+        return TaskPatchResponseSerializer(instance, context=self.context).data
+
+
+class BoardTaskSerializer(serializers.ModelSerializer):
+    """
+    Stripped-down task serializer for the Board Detail View.
+    """
+    assignee = UserNestedSerializer(read_only=True)
+    reviewer = UserNestedSerializer(read_only=True)
+    comments_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Task
+        fields = [
+            'id', 'title', 'description', 'status', 'priority',
+            'assignee', 'reviewer', 'due_date', 'comments_count'
+        ]
 
     def get_comments_count(self, obj):
         return obj.comments.count()
@@ -67,7 +113,7 @@ class TaskSerializer(serializers.ModelSerializer):
 class BoardListSerializer(serializers.ModelSerializer):
     """
     Serializer for listing boards (summary view).
-    Matches the exact field order required by the API documentation.
+    Used for GET /api/boards/ and POST response.
     """
     member_count = serializers.SerializerMethodField()
     ticket_count = serializers.SerializerMethodField()
@@ -97,38 +143,29 @@ class BoardListSerializer(serializers.ModelSerializer):
 
 class BoardSerializer(serializers.ModelSerializer):
     """
-    Serializer for detailed board view with nested objects.
+    Serializer for detailed board view (GET /api/boards/{id}/).
+    Includes nested members and tasks.
     """
-    member_count = serializers.SerializerMethodField()
-    ticket_count = serializers.SerializerMethodField()
-    tasks_to_do_count = serializers.SerializerMethodField()
-    tasks_high_prio_count = serializers.SerializerMethodField()
-
-    owner_data = UserNestedSerializer(source='owner', read_only=True)
-    members_data = UserNestedSerializer(source='members', many=True, read_only=True)
-
-    tasks = TaskSerializer(many=True, read_only=True)
     owner_id = serializers.ReadOnlyField(source='owner.id')
+    members = UserNestedSerializer(many=True, read_only=True)
+    tasks = BoardTaskSerializer(many=True, read_only=True)
 
     class Meta:
         model = Board
-        fields = [
-            'id', 'title', 'owner_data', 'members_data', 'tasks', 'owner_id',
-            'member_count', 'ticket_count', 'tasks_to_do_count',
-            'tasks_high_prio_count'
-        ]
+        fields = ['id', 'title', 'owner_id', 'members', 'tasks']
 
-    def get_member_count(self, obj):
-        return obj.members.count()
 
-    def get_ticket_count(self, obj):
-        return obj.tasks.count()
+class BoardPatchResponseSerializer(serializers.ModelSerializer):
+    """
+    Specific serializer for PATCH responses.
+    Includes owner_data and members_data, but NO tasks and NO counts.
+    """
+    owner_data = UserNestedSerializer(source='owner', read_only=True)
+    members_data = UserNestedSerializer(source='members', many=True, read_only=True)
 
-    def get_tasks_to_do_count(self, obj):
-        return obj.tasks.filter(status='to-do').count()
-
-    def get_tasks_high_prio_count(self, obj):
-        return obj.tasks.filter(priority='high').count()
+    class Meta:
+        model = Board
+        fields = ['id', 'title', 'owner_data', 'members_data']
 
 
 class BoardCreateUpdateSerializer(serializers.ModelSerializer):
@@ -153,4 +190,7 @@ class BoardCreateUpdateSerializer(serializers.ModelSerializer):
         return board
 
     def to_representation(self, instance):
-        return BoardSerializer(instance, context=self.context).data
+        if self.context.get('view') and self.context['view'].action == 'partial_update':
+            return BoardPatchResponseSerializer(instance, context=self.context).data
+
+        return BoardListSerializer(instance, context=self.context).data

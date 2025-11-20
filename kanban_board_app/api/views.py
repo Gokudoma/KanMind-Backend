@@ -11,7 +11,7 @@ from .permissions import (
 )
 from .serializers import (
     BoardCreateUpdateSerializer, BoardListSerializer,
-    BoardSerializer, CommentSerializer, TaskSerializer
+    BoardSerializer, CommentSerializer, TaskSerializer, TaskUpdateSerializer
 )
 
 
@@ -51,6 +51,11 @@ class TaskViewSet(viewsets.ModelViewSet):
     """
     queryset = Task.objects.all()
     serializer_class = TaskSerializer
+
+    def get_serializer_class(self):
+        if self.action in ['update', 'partial_update']:
+            return TaskUpdateSerializer
+        return TaskSerializer
 
     def get_permissions(self):
         if self.action in ['retrieve', 'partial_update']:
