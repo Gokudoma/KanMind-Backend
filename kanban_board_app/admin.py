@@ -1,6 +1,12 @@
+"""
+Django admin registration for the Kanban board application.
+Registers Board, Task, and Comment models for administrative access.
+"""
+
 from django.contrib import admin
-from .models import Board, Task, Comment
+
+from .models import Board, Comment, Task
 
 admin.site.register(Board)
-admin.site.register(Task)
 admin.site.register(Comment)
+admin.site.register(Task)
