@@ -1,6 +1,6 @@
 from rest_framework.permissions import BasePermission
 
-from kanban_board_app.models import Task
+from kanban_board_app.models import Board, Comment, Task
 
 
 class IsBoardOwner(BasePermission):
@@ -14,12 +14,17 @@ class IsBoardOwner(BasePermission):
 class IsBoardMember(BasePermission):
     """
     Allows access only to members of the board.
-    Automatically resolves the board if the object is a Task.
+    Automatically resolves the board from Task or Comment objects.
     """
     def has_object_permission(self, request, view, obj):
-        board = obj
-        if isinstance(obj, Task):
+        if isinstance(obj, Board):
+            board = obj
+        elif isinstance(obj, Task):
             board = obj.board
+        elif isinstance(obj, Comment):
+            board = obj.task.board
+        else:
+            return False
         
         return board.members.filter(id=request.user.id).exists()
 

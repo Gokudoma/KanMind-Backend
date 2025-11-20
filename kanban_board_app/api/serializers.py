@@ -64,9 +64,40 @@ class TaskSerializer(serializers.ModelSerializer):
         return obj.comments.count()
 
 
+class BoardListSerializer(serializers.ModelSerializer):
+    """
+    Serializer for listing boards (summary view).
+    Matches the exact field order required by the API documentation.
+    """
+    member_count = serializers.SerializerMethodField()
+    ticket_count = serializers.SerializerMethodField()
+    tasks_to_do_count = serializers.SerializerMethodField()
+    tasks_high_prio_count = serializers.SerializerMethodField()
+    owner_id = serializers.ReadOnlyField(source='owner.id')
+
+    class Meta:
+        model = Board
+        fields = [
+            'id', 'title', 'member_count', 'ticket_count',
+            'tasks_to_do_count', 'tasks_high_prio_count', 'owner_id'
+        ]
+
+    def get_member_count(self, obj):
+        return obj.members.count()
+
+    def get_ticket_count(self, obj):
+        return obj.tasks.count()
+
+    def get_tasks_to_do_count(self, obj):
+        return obj.tasks.filter(status='to-do').count()
+
+    def get_tasks_high_prio_count(self, obj):
+        return obj.tasks.filter(priority='high').count()
+
+
 class BoardSerializer(serializers.ModelSerializer):
     """
-    Serializer for reading board details with computed fields.
+    Serializer for detailed board view with nested objects.
     """
     member_count = serializers.SerializerMethodField()
     ticket_count = serializers.SerializerMethodField()
@@ -103,7 +134,6 @@ class BoardSerializer(serializers.ModelSerializer):
 class BoardCreateUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for creating and updating boards.
-    Handles adding the creator as owner and member automatically.
     """
     members = serializers.PrimaryKeyRelatedField(
         queryset=CustomUser.objects.all(),

@@ -28,9 +28,9 @@ class UserRegistrationView(APIView):
         token = Token.objects.create(user=user)
         return Response({
             'token': token.key,
-            'user_id': user.pk,
+            'fullname': user.fullname,
             'email': user.email,
-            'fullname': user.fullname
+            'user_id': user.pk,
         }, status=status.HTTP_201_CREATED)
 
 
@@ -53,9 +53,9 @@ class CustomAuthToken(ObtainAuthToken):
 
         return Response({
             'token': token.key,
-            'user_id': user.pk,
+            'fullname': user.fullname,
             'email': user.email,
-            'fullname': user.fullname
+            'user_id': user.pk,
         })
 
 

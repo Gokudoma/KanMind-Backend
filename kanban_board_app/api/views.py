@@ -10,8 +10,8 @@ from .permissions import (
     IsBoardMember, IsBoardOwner, IsCommentAuthor, IsTaskAuthorOrBoardOwner
 )
 from .serializers import (
-    BoardCreateUpdateSerializer, BoardSerializer,
-    CommentSerializer, TaskSerializer
+    BoardCreateUpdateSerializer, BoardListSerializer,
+    BoardSerializer, CommentSerializer, TaskSerializer
 )
 
 
@@ -30,6 +30,8 @@ class BoardViewSet(viewsets.ModelViewSet):
         )
 
     def get_serializer_class(self):
+        if self.action == 'list':
+            return BoardListSerializer
         if self.action in ['create', 'partial_update']:
             return BoardCreateUpdateSerializer
         return BoardSerializer
