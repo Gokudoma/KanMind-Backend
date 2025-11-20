@@ -1,135 +1,66 @@
-KanMind Backend
+# KanMind Backend
 
-    A robust RESTful API for a Kanban board application, built with Django and Django REST Framework (DRF). This backend serves as the data layer for the KanMind frontend, managing users, boards, tasks, and comments.
+This is the RESTful API backend for the KanMind Kanban application. It provides authentication, board management, task tracking, and commenting features.
 
+> **Note:** This repository contains only the backend code.
+> **Important:** Do NOT commit the `db.sqlite3` file or `.env` files to GitHub.
 
+## Technologies
+* **Python 3.10+**
+* **Django 5.x**
+* **Django REST Framework (DRF)**
+* **SQLite** (Development Database)
 
-🚀 Features
+## Setup & Installation
 
-    User Authentication: Secure registration, login (Token-based), and email verification check.
-
-    Board Management: Create, read, update, and delete Kanban boards.
-
-    Task Management: Full CRUD operations for tasks with status (To-do, In-progress, Await-feedback, Done) and priority levels.
-
-    Collaboration: Add members to boards and assign tasks to specific users.
-
-    Comments: Nested comments on tasks for team communication.
-
-    Permissions: Granular permission system (e.g., only board owners can delete boards; only members can view/edit tasks).
-
-
-
-🛠️ Tech Stack
-
-    Language: Python 3.10+
-
-    Framework: Django 5.x
-
-    API Toolkit: Django REST Framework (DRF)
-
-    Authentication: DRF Token Authentication
-
-    Database: SQLite (Development)
-
-    Utilities: django-cors-headers, drf-nested-routers
-
-
-
-⚙️ Installation & Setup
-
-    Follow these steps to get the backend running locally:
-
-1. Clone the repository
-
-    git clone <YOUR_REPOSITORY_URL>
+1.  **Clone the repository:**
+    ```bash
+    git clone <REPOSITORY_URL>
     cd KanMind-Backend
+    ```
 
+2.  **Create and activate virtual environment:**
+    * Windows: `python -m venv venv` then `.\venv\Scripts\activate`
+    * Mac/Linux: `python3 -m venv venv` then `source venv/bin/activate`
 
-2. Create and activate a virtual environment
-
-Windows:
-
-    python -m venv venv
-    .\venv\Scripts\Activate
-
-
-Mac/Linux:
-
-    python3 -m venv venv
-    source venv/bin/activate
-
-
-3. Install dependencies
-
+3.  **Install dependencies:**
+    ```bash
     pip install -r requirements.txt
+    ```
 
-
-4. Apply database migrations
-
+4.  **Apply Migrations:**
+    ```bash
     python manage.py migrate
+    ```
 
-
-5. Create a Superuser (Admin)
-
-    To access the Django Admin panel:
-
+5.  **Create Admin User:**
+    To access the Django Admin Panel at `/admin/`, create a superuser:
+    ```bash
     python manage.py createsuperuser
+    ```
 
-
-6. Run the server
-
+6.  **Run Server:**
+    ```bash
     python manage.py runserver
+    ```
+    The API is now accessible at `http://127.0.0.1:8000/api/`.
 
+## Features
+* **Authentication:** Token-based login, registration, and email checks.
+* **Boards:** Create and manage kanban boards with multiple members.
+* **Tasks:** Full CRUD for tasks including status, priority, and assignment.
+* **Comments:** Discussion threads per task.
+* **Permissions:** Granular access control (e.g., only owners can delete boards).
 
-    The API will be available at http://127.0.0.1:8000/.
+## Project Structure
+The project follows a strict modular structure:
+* **`core/`**: Main settings and routing.
+* **`user_auth_app/`**: Handles user logic.
+    * `api/`: Contains Serializers, Views, and URLs.
+* **`kanban_board_app/`**: Handles boards, tasks, and comments.
+    * `api/`: Contains Serializers, Views, Permissions, and URLs.
 
-
-
-📡 API Endpoints
-
-    The API provides the following main endpoints. All endpoints (except auth) require a valid token in the header (Authorization: Token <your_token>).
-
-Authentication
-
-    POST /api/registration/ - Register a new user
-
-    POST /api/login/ - Login and retrieve auth token
-
-    GET /api/email-check/ - Check if an email is already taken
-
-Boards
-
-    GET /api/boards/ - List all boards you are a member of
-
-    POST /api/boards/ - Create a new board
-
-    GET /api/boards/{id}/ - Retrieve board details (including nested tasks)
-
-    PATCH /api/boards/{id}/ - Update board (e.g., title or members)
-
-    DELETE /api/boards/{id}/ - Delete a board (Owner only)
-
-Tasks
-
-    GET /api/tasks/assigned-to-me/ - List tasks assigned to the current user
-
-    POST /api/tasks/ - Create a new task
-
-    PATCH /api/tasks/{id}/ - Update a task status, priority, etc.
-
-    DELETE /api/tasks/{id}/ - Delete a task
-
-Comments
-
-    GET /api/tasks/{task_id}/comments/ - List comments for a task
-
-    POST /api/tasks/{task_id}/comments/ - Add a comment to a task
-
-
-
-📄 License
-
-    This project is developed as part of the Developer Akademie educational curriculum. It is intended for non-commercial, educational purposes only.
-
-    "Developed as part of the Developer Akademie GmbH advanced training program."
+## API Documentation
+The API is resource-oriented. Examples:
+* `GET /api/boards/` - List boards
+* `POST /api/login/` - Authenticate user

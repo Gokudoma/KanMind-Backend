@@ -1,5 +1,5 @@
 from rest_framework.permissions import BasePermission
-from .models import Task 
+from ..models import Task 
 
 class IsBoardOwner(BasePermission):
     def has_object_permission(self, request, view, obj):

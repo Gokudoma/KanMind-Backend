@@ -40,8 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
-    'users.apps.UsersConfig',
-    'kanban.apps.KanbanConfig',
+    'user_auth_app',       
+    'kanban_board_app',   
 ]
 
 MIDDLEWARE = [
@@ -141,4 +141,4 @@ REST_FRAMEWORK = {
 # --- CORS Settings ---
 CORS_ALLOW_ALL_ORIGINS = True
 
-AUTH_USER_MODEL = 'users.CustomUser'
+AUTH_USER_MODEL = 'user_auth_app.CustomUser'
