@@ -17,6 +17,17 @@ class UserRegistrationView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        """
+        Handles the registration process for a new user.
+
+        Steps:
+        1. Pass the incoming request data to the UserRegistrationSerializer.
+        2. Validate the data (checks email format, password match, etc.).
+        3. If invalid: Return 400 Bad Request with error details.
+        4. If valid: Save the new user instance.
+        5. Generate an authentication token for the new user.
+        6. Return the token and user details in the response (201 Created).
+        """
         serializer = UserRegistrationSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
@@ -43,6 +54,16 @@ class CustomAuthToken(ObtainAuthToken):
     serializer_class = LoginSerializer
 
     def post(self, request, *args, **kwargs):
+        """
+        Handles user login and token generation.
+
+        Steps:
+        1. Initialize LoginSerializer with request data and context.
+        2. Validate credentials (email & password) using Django's authenticate.
+        3. If valid: Retrieve the authenticated user object.
+        4. Get or create an auth token for this user.
+        5. Return the token along with user ID, email, and fullname.
+        """
         serializer = self.serializer_class(
             data=request.data,
             context={'request': request}
@@ -66,6 +87,16 @@ class EmailCheckView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
+        """
+        Checks for the existence of a user with a specific email.
+
+        Steps:
+        1. Extract the 'email' parameter from the query string.
+        2. If email is missing: Return 400 Bad Request.
+        3. Attempt to find a user with this email in the database.
+        4. If found: Return user details (200 OK).
+        5. If not found: Return 404 Not Found error.
+        """
         email = request.query_params.get('email')
         if not email:
             return Response(

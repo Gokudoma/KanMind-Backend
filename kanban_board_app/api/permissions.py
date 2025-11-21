@@ -5,7 +5,10 @@ from kanban_board_app.models import Board, Comment, Task
 
 class IsBoardOwner(BasePermission):
     """
-    Allows access only to the owner of the board.
+    Permission check for Board ownership.
+    
+    Logic:
+    - Returns True only if the object's 'owner' field matches request.user.
     """
     def has_object_permission(self, request, view, obj):
         return obj.owner == request.user
@@ -13,8 +16,14 @@ class IsBoardOwner(BasePermission):
 
 class IsBoardMember(BasePermission):
     """
-    Allows access only to members of the board.
-    Automatically resolves the board from Task or Comment objects.
+    Permission check for Board membership.
+    
+    Logic:
+    1. Determines the associated Board based on the object type:
+       - If object is Board: use object itself.
+       - If object is Task: use obj.board.
+       - If object is Comment: use obj.task.board.
+    2. Checks if request.user exists in board.members.
     """
     def has_object_permission(self, request, view, obj):
         if isinstance(obj, Board):
@@ -31,7 +40,10 @@ class IsBoardMember(BasePermission):
 
 class IsCommentAuthor(BasePermission):
     """
-    Allows access only to the author of the comment.
+    Permission check for Comment authorship.
+    
+    Logic:
+    - Returns True only if the comment's author matches request.user.
     """
     def has_object_permission(self, request, view, obj):
         return obj.author == request.user
@@ -39,7 +51,11 @@ class IsCommentAuthor(BasePermission):
 
 class IsTaskAuthorOrBoardOwner(BasePermission):
     """
-    Allows access if the user is the task assignee OR the board owner.
+    Permission check for Task deletion.
+    
+    Logic:
+    - Allows access if request.user is the Task assignee.
+    - OR if request.user is the Owner of the parent Board.
     """
     def has_object_permission(self, request, view, obj):
         is_task_assignee = obj.assignee == request.user

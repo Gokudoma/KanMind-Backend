@@ -22,6 +22,15 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         fields = ['fullname', 'email', 'password', 'repeated_password']
 
     def create(self, validated_data):
+        """
+        Creates a new user instance.
+
+        Steps:
+        1. Use create_user helper to handle password hashing correctly.
+        2. Set the username to the email (as they are identical in this system).
+        3. Assign the fullname explicitly.
+        4. Save and return the user object.
+        """
         user = CustomUser.objects.create_user(
             username=validated_data['email'],
             email=validated_data['email'],
@@ -40,6 +49,15 @@ class LoginSerializer(serializers.Serializer):
     password = serializers.CharField(style={'input_type': 'password'})
 
     def validate(self, data):
+        """
+        Validates credentials and authenticates the user.
+
+        Steps:
+        1. Check if both email and password are provided.
+        2. Use Django's authenticate() function to verify credentials.
+        3. If authentication fails (user is None), raise a ValidationError.
+        4. If successful, attach the user object to the validated data.
+        """
         email = data.get('email')
         password = data.get('password')
 

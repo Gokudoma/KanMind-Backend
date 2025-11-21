@@ -7,11 +7,15 @@ class Board(models.Model):
     Represents a Kanban board containing tasks and members.
     """
     title = models.CharField(max_length=255)
+    
+    # The user who created the board and has delete permissions
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
         related_name='owned_boards'
     )
+    
+    # Users who have access to view and edit tasks on this board
     members = models.ManyToManyField(
         settings.AUTH_USER_MODEL,
         related_name='boards'
@@ -41,6 +45,8 @@ class Task(models.Model):
 
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, null=True)
+    
+    # Task State Management
     status = models.CharField(
         max_length=20, choices=STATUS_CHOICES, default='to-do'
     )
@@ -49,6 +55,7 @@ class Task(models.Model):
     )
     due_date = models.DateField()
 
+    # Relationships
     board = models.ForeignKey(
         Board,
         on_delete=models.CASCADE,
@@ -79,11 +86,15 @@ class Comment(models.Model):
     """
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Parent Task
     task = models.ForeignKey(
         Task,
         on_delete=models.CASCADE,
         related_name='comments'
     )
+    
+    # Comment Creator
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
